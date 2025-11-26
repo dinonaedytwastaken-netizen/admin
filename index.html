@@ -151,29 +151,16 @@
 </div>
 
 <script>
-// SHA-256 hash of your password "Gi@nts2025!!!"
-const correctHash = "6d20e4dcac0e2156b28ac5a18d9d3c8db7e34ccec585c624c2d81854ce74e6a3";
+// Plain password check
+const correctPassword = "Gi@nts2025!!!";
 
-// Show login or admin based on session
-if(localStorage.getItem("admin_session")==="active"){
-    document.getElementById("adminPage").style.display = "flex";
-}else{
-    document.getElementById("loginPage").style.display = "flex";
-}
-
-// LOGIN FUNCTION
-async function login(){
+function login() {
     const pass = document.getElementById("password").value;
-    const enc = new TextEncoder().encode(pass);
-    const hashBuffer = await crypto.subtle.digest("SHA-256", enc);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2,"0")).join("");
-
-    if(hashHex === correctHash){
+    if(pass === correctPassword){
         localStorage.setItem("admin_session", "active");
         document.getElementById("loginPage").style.display = "none";
         document.getElementById("adminPage").style.display = "flex";
-    }else{
+    } else {
         document.getElementById("error").textContent = "Incorrect password.";
     }
 }
