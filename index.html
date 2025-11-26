@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Admin Panel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+    body { margin:0; background:#0d0d0d; color:white; font-family:Arial; }
+    /* Common */
+    input, select, button { font-family: Arial; }
+
+    /* Login Page */
+    #loginPage {
+        display: none;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .login-box {
+        background: #141414;
+        padding: 30px;
+        border-radius: 12px;
+        border: 1px solid #00ff88;
+        width: 350px;
+        text-align: center;
+    }
+    .login-box input {
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #00ff88;
+        background: #0d0d0d;
+        color: white;
+        font-size: 16px;
+        margin-bottom: 15px;
+    }
+    .login-box button {
+        width: 100%;
+        padding: 12px;
+        background: #00ff88;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+    }
+    #error { color:#ff4444;margin-top:10px; }
+
+    /* Admin Page */
+    #adminPage { display:none; display:flex; }
+    .sidebar {
+        width: 250px;
+        background:#111;
+        padding:20px;
+        height:100vh;
+        border-right:2px solid #00ff88;
+    }
+    .sidebar h2 { color:#00ff88; }
+    .sidebar a { display:block; color:white; text-decoration:none; padding:10px 0; }
+    .sidebar a:hover { color:#00ff88; }
+
+    .main { padding:30px; flex:1; overflow-y:auto; height:100vh; }
+
+    h1 { color:#00ff88; }
+
+    .card {
+        background:#141414;
+        padding:20px;
+        border-radius:12px;
+        border:1px solid #00ff88;
+        margin-bottom:15px;
+    }
+
+    input, select {
+        width:100%;
+        padding:10px;
+        margin-top:8px;
+        border-radius:8px;
+        border:1px solid #00ff88;
+        background:#0d0d0d;
+        color:white;
+    }
+
+    button.addBtn {
+        background:#00ff88;
+        padding:10px 15px;
+        border:none;
+        margin-top:10px;
+        border-radius:8px;
+        cursor:pointer;
+        font-weight:bold;
+    }
+</style>
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div id="loginPage">
+    <div class="login-box">
+        <h2>Admin Login</h2>
+        <p style="opacity:.7">Enter password to continue</p>
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="login()">Login</button>
+        <p id="error"></p>
+    </div>
+</div>
+
+<!-- ADMIN PAGE -->
+<div id="adminPage">
+    <div class="sidebar">
+        <h2>Dashboard</h2>
+        <a href="#projects">Projects</a>
+        <a href="#clients">Clients</a>
+        <a href="#tasks">Daily Tasks</a>
+        <a href="#" onclick="logout()">Logout</a>
+    </div>
+
+    <div class="main">
+        <h1>Admin Panel</h1>
+
+        <!-- PROJECTS -->
+        <div id="projects" class="card">
+            <h2>Projects</h2>
+            <input id="projectName" placeholder="Project name">
+            <select id="projectStatus">
+                <option>Pending</option>
+                <option>In Progress</option>
+                <option>Completed</option>
+            </select>
+            <button class="addBtn" onclick="addProject()">Add Project</button>
+            <div id="projectList"></div>
+        </div>
+
+        <!-- CLIENTS -->
+        <div id="clients" class="card">
+            <h2>Clients</h2>
+            <input id="clientName" placeholder="Client name">
+            <button class="addBtn" onclick="addClient()">Add Client</button>
+            <div id="clientList"></div>
+        </div>
+
+        <!-- DAILY TASKS -->
+        <div id="tasks" class="card">
+            <h2>Daily Tasks</h2>
+            <input id="taskName" placeholder="Task name">
+            <button class="addBtn" onclick="addTask()">Add Task</button>
+            <div id="taskList"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+// SHA-256 hash of your password "Gi@nts2025!!!"
+const correctHash = "6d20e4dcac0e2156b28ac5a18d9d3c8db7e34ccec585c624c2d81854ce74e6a3";
+
+// Show login or admin based on session
+if(localStorage.getItem("admin_session")==="active"){
+    document.getElementById("adminPage").style.display = "flex";
+}else{
+    document.getElementById("loginPage").style.display = "flex";
+}
+
+// LOGIN FUNCTION
+async function login(){
+    const pass = document.getElementById("password").value;
+    const enc = new TextEncoder().encode(pass);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", enc);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2,"0")).join("");
+
+    if(hashHex === correctHash){
+        localStorage.setItem("admin_session", "active");
+        document.getElementById("loginPage").style.display = "none";
+        document.getElementById("adminPage").style.display = "flex";
+    }else{
+        document.getElementById("error").textContent = "Incorrect password.";
+    }
+}
+
+// LOGOUT FUNCTION
+function logout(){
+    localStorage.removeItem("admin_session");
+    location.reload();
+}
+
+// Storage for projects, clients, tasks
+let projects = JSON.parse(localStorage.getItem("projects") || "[]");
+let clients = JSON.parse(localStorage.getItem("clients") || "[]");
+let tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
+
+function save() {
+    localStorage.setItem("projects", JSON.stringify(projects));
+    localStorage.setItem("clients", JSON.stringify(clients));
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+}
+
+function render() {
+    document.getElementById("projectList").innerHTML =
+        projects.map(p => `<p><b>${p.name}</b> — ${p.status}</p>`).join("");
+    document.getElementById("clientList").innerHTML =
+        clients.map(c => `<p>${c}</p>`).join("");
+    document.getElementById("taskList").innerHTML =
+        tasks.map(t => `<p>${t}</p>`).join("");
+}
+
+function addProject() {
+    const name = document.getElementById("projectName").value.trim();
+    if(!name) return;
+    projects.push({name, status: document.getElementById("projectStatus").value});
+    save(); render();
+    document.getElementById("projectName").value = "";
+}
+
+function addClient() {
+    const name = document.getElementById("clientName").value.trim();
+    if(!name) return;
+    clients.push(name); save(); render();
+    document.getElementById("clientName").value = "";
+}
+
+function addTask() {
+    const name = document.getElementById("taskName").value.trim();
+    if(!name) return;
+    tasks.push(name); save(); render();
+    document.getElementById("taskName").value = "";
+}
+
+render();
+</script>
+
+</body>
+</html>
